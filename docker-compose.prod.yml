@@ -1,0 +1,12 @@
+services:
+  bot:
+    image: ghcr.io/fyysikkokilta/tonkkabot:latest
+    restart: always
+    volumes:
+      - ./:/bot/:rw
+    env_file:
+      - bot.env
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m

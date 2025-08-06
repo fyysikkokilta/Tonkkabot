@@ -1,0 +1,14 @@
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    volumes:
+      - ./:/bot/:rw
+    env_file:
+      - ./bot.env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
