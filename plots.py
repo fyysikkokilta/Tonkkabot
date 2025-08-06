@@ -1,11 +1,19 @@
-from matplotlib.dates import DateFormatter
-from cachetools import cached, TTLCache
-from pytz import timezone
+"""
+Plotting module for Tonkkabot.
+
+This module handles creating temperature plots for historical data and forecasts
+using matplotlib and seaborn for visualization.
+"""
+
 import io
+from typing import BinaryIO
 
-
-import matplotlib.pyplot as plt
+from cachetools import cached, TTLCache
+from matplotlib import pyplot as plt
+from matplotlib.dates import DateFormatter
+from pytz import timezone
 import seaborn as sns
+
 import data
 
 sns.set_theme(style="whitegrid")
@@ -14,7 +22,16 @@ cache_history = TTLCache(maxsize=100, ttl=60)
 cache_forecast = TTLCache(maxsize=100, ttl=60)
 
 
-def temperature_plot(df, title):
+def temperature_plot(df, title: str) -> BinaryIO:
+    """Create a temperature plot with the given data and title.
+
+    Args:
+        df: DataFrame containing temperature data
+        title: Title for the plot
+
+    Returns:
+        BinaryIO: BytesIO object containing the plot image
+    """
     # Set style for better looking plots
     plt.style.use("seaborn-v0_8")
 
@@ -42,7 +59,15 @@ def temperature_plot(df, title):
 
 
 @cached(cache_history)
-def history(hours=24):
+def history(hours: int = 24) -> BinaryIO:
+    """Create a temperature history plot for the specified number of hours.
+
+    Args:
+        hours: Number of hours to plot (default: 24)
+
+    Returns:
+        BinaryIO: BytesIO object containing the plot image
+    """
     df = data.fetch_data(hourdelta=hours + 2)
     if df.empty:
         # Return a placeholder plot with error message
@@ -66,7 +91,15 @@ def history(hours=24):
 
 
 @cached(cache_forecast)
-def forecast(hours=48):
+def forecast(hours: int = 48) -> BinaryIO:
+    """Create a temperature forecast plot for the specified number of hours.
+
+    Args:
+        hours: Number of hours to plot (default: 48)
+
+    Returns:
+        BinaryIO: BytesIO object containing the plot image
+    """
     df = data.fetch_data()
     if df.empty:
         # Return a placeholder plot with error message

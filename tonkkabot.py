@@ -1,14 +1,23 @@
-import os
-import time
+"""
+Main module for Tonkkabot.
+
+This module contains the main Telegram bot application that tracks temperature
+at Helsinki-Vantaa airport and provides weather information and plots.
+"""
+
 import datetime
 import logging
-from telegram.ext import Application, CommandHandler, ContextTypes
+import os
+import time
+
 from telegram import Bot, Update
+from telegram.ext import Application, CommandHandler, ContextTypes
+
 import data
 import plots
 
 token = os.getenv("BOT_TOKEN")
-info = (
+BOT_INFO = (
     "This bot tracks the temperature at Helsinki-Vantaa (EFHK). Use command /history to plot"
     " the temperature of last 24h, command \n/temperature to plot current temperature and "
     "command /ennuste to plot the forecast of next 50h."
@@ -21,11 +30,23 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(info)
+async def start(update: Update) -> None:
+    """Handle the /start command.
+
+    Args:
+        update: The update object containing the message
+        context: The context object (unused)
+    """
+    await update.message.reply_text(BOT_INFO)
 
 
-async def history(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def history(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle the /history command.
+
+    Args:
+        update: The update object containing the message
+        context: The context object containing command arguments
+    """
     hours = next(iter(context.args), None)
 
     try:
@@ -37,7 +58,7 @@ async def history(update: Update, context: ContextTypes.DEFAULT_TYPE):
             bio = plots.history()
     except ValueError:
         await update.message.reply_text(
-            f"Please send an integer argument to change the plotting range."
+            "Please send an integer argument to change the plotting range."
         )
         bio = plots.history()
     except TypeError:
@@ -55,11 +76,17 @@ async def history(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_photo(
             chat_id=update.effective_chat.id,
             photo=bio,
-            caption=f"Oli vielä vähän liian kylmää :(",
+            caption="Oli vielä vähän liian kylmää :(",
         )
 
 
-async def temperature(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def temperature(update: Update) -> None:
+    """Handle the /temperature command.
+
+    Args:
+        update: The update object containing the message
+        context: The context object (unused)
+    """
     temp, timestamp = data.temperature()
     if temp is None or timestamp is None:
         await update.message.reply_text(
@@ -74,7 +101,13 @@ async def temperature(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def forecast(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def forecast(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle the /forecast command.
+
+    Args:
+        update: The update object containing the message
+        context: The context object containing command arguments
+    """
     hours = next(iter(context.args), None)
     try:
         hours = int(hours)
@@ -85,7 +118,7 @@ async def forecast(update: Update, context: ContextTypes.DEFAULT_TYPE):
             bio = plots.forecast()
     except ValueError:
         await update.message.reply_text(
-            f"Please send an integer argument to change the plotting range."
+            "Please send an integer argument to change the plotting range."
         )
         bio = plots.forecast()
     except TypeError:
@@ -98,20 +131,32 @@ async def forecast(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def check_history_job(context: ContextTypes.DEFAULT_TYPE):
-    """Job to check history daily"""
+async def check_history_job() -> None:
+    """Job to check history daily.
+
+    Args:
+        context: The context object (unused)
+    """
     data.check_history()
 
 
-async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Log Errors caused by Updates."""
+async def error(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Log Errors caused by Updates.
+
+    Args:
+        update: The update object that caused the error
+        context: The context object containing the error
+    """
     logger.warning('Update "%s" caused error "%s"', update, context.error)
 
 
-async def flush_messages(bot: Bot):
+async def flush_messages(bot: Bot) -> None:
     """Flushes the messages send to the bot during downtime so that the bot
-    does not start spamming when it gets online again."""
+    does not start spamming when it gets online again.
 
+    Args:
+        bot: The bot instance to flush messages for
+    """
     updates = await bot.get_updates()
     while updates:
         print(f"Flushing {len(updates)} messages.")
@@ -119,7 +164,12 @@ async def flush_messages(bot: Bot):
         updates = await bot.get_updates(updates[-1]["update_id"] + 1)
 
 
-async def post_init(app: Application):
+async def post_init(app: Application) -> None:
+    """Initialize the application after it's built.
+
+    Args:
+        app: The application instance to initialize
+    """
     await flush_messages(app.bot)
 
     app.add_handler(CommandHandler("start", start))
@@ -140,7 +190,8 @@ async def post_init(app: Application):
     logger.info("Post init done.")
 
 
-def main():
+def main() -> None:
+    """Main function to run the bot."""
     app = Application.builder().token(token).concurrent_updates(False).build()
     app.post_init = post_init
     app.run_polling()
