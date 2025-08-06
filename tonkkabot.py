@@ -67,20 +67,18 @@ async def history(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     tonks = data.check_tonkka_occurrence()
     if tonks:
-        await context.bot.send_photo(
-            chat_id=update.effective_chat.id,
+        await update.message.reply_photo(
             photo=bio,
             caption=f'Tönkkä aukesi {tonks["time"]}',
         )
     else:
-        await context.bot.send_photo(
-            chat_id=update.effective_chat.id,
+        await update.message.reply_photo(
             photo=bio,
             caption="Oli vielä vähän liian kylmää :(",
         )
 
 
-async def temperature(update: Update) -> None:
+async def temperature(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle the /temperature command.
 
     Args:
@@ -124,8 +122,7 @@ async def forecast(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     except TypeError:
         bio = plots.forecast()
     bio.seek(0)
-    await context.bot.send_photo(
-        chat_id=update.effective_chat.id,
+    await update.message.reply_photo(
         photo=bio,
         caption="Onhan tönkkä jo ostettu? ;)",
     )
